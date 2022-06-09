@@ -1,8 +1,4 @@
-import {
-  ArgumentException,
-  FormatException,
-  ParseException,
-} from "../../deps.ts";
+import { ArgumentException, FormatException, ParseException } from "../deps.ts";
 
 import type { IPv4BitArray, IPv4Octets } from "./types.ts";
 
@@ -23,6 +19,7 @@ export class IPv4Mask {
       const bits = byteStr.splice(0, 8);
       const byte = bits.join("");
       const decVal = parseInt(byte, 2);
+      
       octets.push(decVal);
     }
 

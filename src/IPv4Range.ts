@@ -1,5 +1,5 @@
 import { IPv4Address } from "./IPv4Address.ts";
-
+import { IPv4RangePage } from "./types.ts";
 export class IPv4Range {
   public get range(): [IPv4Address, IPv4Address] {
     return [...this._range];
@@ -18,6 +18,7 @@ export class IPv4Range {
   constructor(start: IPv4Address, end: IPv4Address) {
     const b = parseInt(start.bits.join(""), 2);
     const e = parseInt(end.bits.join(""), 2);
+    
     if (e < b) {
       [start, end] = [end, start];
     }
@@ -79,5 +80,22 @@ export class IPv4Range {
     const a = parseInt(ip.bits.join(""), 2);
 
     return a >= b && a <= e;
+  }
+
+  public page(count = 25, page = 0): IPv4RangePage {
+    const block = [...this].splice(page * count, count);
+
+    return {
+      ips: block,
+      count: block.length,
+      next: () => {
+        if (block.length === 0) {
+          return this.page(count, page);
+        }
+
+        return this.page(count, ++page);
+      },
+      page: page,
+    };
   }
 }

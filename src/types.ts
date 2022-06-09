@@ -37,7 +37,9 @@ export type IPv4BitArray = [
   number,
 ];
 
-export interface IDnsResolverOptions {
-  ip: IPv4Address;
-  port: number;
+export interface IPv4RangePage {
+  ips: (IPv4Address | undefined)[];
+  count: number;
+  page: number;
+  next(): IPv4RangePage;
 }

@@ -85,4 +85,13 @@ export class IPv4Network {
 
     return this.network.equals(network.network);
   }
+
+  public overlaps(net: IPv4Network) {
+    const { network, broadcast } = this;
+    const range = net.toRange();
+    const tRange = this.toRange();
+
+    return range.contains(network) || range.contains(broadcast) ||
+      tRange.contains(net.network) || tRange.contains(net.broadcast);
+  }
 }

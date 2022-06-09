@@ -1,7 +1,7 @@
-import { ArgumentException, ParseException } from "../../deps.ts";
-import { assert, assertEquals, assertThrows } from "../../dev_deps.ts";
-import { IPv4Address, IPv4Mask } from "../../mod.ts";
-import type { IPv4BitArray } from "../../mod.ts";
+import { ArgumentException, ParseException } from "../deps.ts";
+import { assert, assertEquals, assertThrows } from "../dev_deps.ts";
+import { IPv4Address, IPv4Mask } from "../mod.ts";
+import type { IPv4BitArray } from "../mod.ts";
 
 const ip10_1_1_1_bits: IPv4BitArray = [
   0,
@@ -41,6 +41,7 @@ const ip10_1_1_1_value = 167837953;
 
 Deno.test("IPv4Address(octets)", () => {
   assertThrows(() => new IPv4Address(10, 1, 1, 256), ArgumentException);
+
   const ip = new IPv4Address(10, 1, 1, 1);
 
   assertEquals(ip.bits, ip10_1_1_1_bits);
@@ -57,6 +58,7 @@ Deno.test("IPv4Address(octets)", () => {
 Deno.test("IPv4Address.parseIPv4(ipAddrString)", () => {
   assertThrows(() => IPv4Address.parseIPv4("10.1.1"), ParseException);
   assertThrows(() => IPv4Address.parseIPv4("10.1.1.256"), ArgumentException);
+
   const ip = IPv4Address.parseIPv4("10.1.1.1");
 
   assertEquals(ip.bits, ip10_1_1_1_bits);
@@ -70,21 +72,18 @@ Deno.test("IPv4Address.parseIPv4(ipAddrString)", () => {
   assertEquals(+ip, ip10_1_1_1_value);
 });
 
-Deno.test("IPv4Address.lookupAddress(hostname)", async () => {
-  const addrs = await IPv4Address.lookupAddress("example.com");
-  const addrsFromGoogle = await IPv4Address.lookupAddress("google.com", {
-    ip: IPv4Address.parseIPv4("8.8.8.8"),
-    port: 53,
-  });
-  assert(
-    addrs.some((addr) => addr.equals(IPv4Address.parseIPv4("93.184.216.34"))),
-  );
-  assert(
-    addrsFromGoogle.some((addr) => {
-      console.log(addr.toString());
-      return addr.equals(IPv4Address.parseIPv4("142.250.138.113"));
-    }),
-  );
+Deno.test("IPv4Address.fromValue(bitsValue)", async () => {
+  const ip = await IPv4Address.fromValue(ip10_1_1_1_value);
+
+  assertEquals(ip.bits, ip10_1_1_1_bits);
+  assertEquals(ip.className, "A");
+  assertEquals(`${ip.defaultMask}`, "255.0.0.0");
+  assertEquals(ip.isAPIPA, false);
+  assertEquals(ip.isLoopBack, false);
+  assertEquals(ip.isPrivate, true);
+  assertEquals(ip.toString(), "10.1.1.1");
+  assertEquals(ip.octets, [10, 1, 1, 1]);
+  assertEquals(+ip, ip10_1_1_1_value);
 });
 
 Deno.test("IPv4Address.fromBits(bitArray)", () => {
@@ -119,6 +118,7 @@ Deno.test("IPv4Address::equals(ip)", () => {
 Deno.test("IPv4Address::mask(mask)", () => {
   const ip = IPv4Address.parseIPv4("10.1.1.22");
   const mask = ip.mask(IPv4Mask.fromPrefix(24));
+
   assert(mask.network.equals(IPv4Address.parseIPv4("10.1.1.0")));
 });
 

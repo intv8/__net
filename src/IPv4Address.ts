@@ -1,18 +1,18 @@
-import { ArgumentException, ParseException } from "../../deps.ts";
+import { ArgumentException, ParseException } from "../deps.ts";
 
-import type { IDnsResolverOptions, IPv4BitArray, IPv4Octets } from "./types.ts";
+import type { IPv4BitArray, IPv4Octets } from "./types.ts";
 
 import { IPv4Mask } from "./IPv4Mask.ts";
 import { IPv4Network } from "./IPv4Network.ts";
 import { IPv4Range } from "./IPv4Range.ts";
 
 import {
+  IP_CLASS_DEFAULT_MASKS,
+  IP_CLASS_RANGES,
   RFC1122_LOOPBACK,
   RFC1918_PRIVATE_ADDRESSES,
   RFC3927_LINK_LOCAL,
-  RFC791_CLASS_DEFAULT_MASKS,
-  RFC791_CLASS_RANGES,
-} from "./_constants.ts";
+} from "./_local_constants.ts";
 
 export class IPv4Address {
   public static parseIPv4(ip: string): IPv4Address {
@@ -50,31 +50,19 @@ export class IPv4Address {
       const byte = bitCopy.splice(0, 8);
       const byteStr = byte.join("");
       const decVal = parseInt(byteStr, 2);
+
       octets.push(decVal);
     }
 
     return new IPv4Address(octets[0], octets[1], octets[2], octets[3]);
   }
 
-  public static async lookupAddress(
-    host: string,
-    options?: IDnsResolverOptions,
-  ): Promise<IPv4Address[]> {
-    const resolvedOptions: { ipAddr: string; port?: number } = { ipAddr: "" };
-    let resolved;
+  public static fromValue(value: number): IPv4Address {
+    const bitStr = value.toString(2);
+    const allBitStr = `${"0".repeat(32 - bitStr.length)}${bitStr}`;
+    const bits = allBitStr.split("").map((b) => parseInt(b)) as IPv4BitArray;
 
-    if (options) {
-      resolvedOptions.ipAddr = options.ip.toString();
-      resolvedOptions.port = options.port;
-
-      resolved = await Deno.resolveDns(host, "A", {
-        nameServer: resolvedOptions,
-      });
-    } else {
-      resolved = await Deno.resolveDns(host, "A");
-    }
-
-    return resolved.map((addr) => IPv4Address.parseIPv4(addr));
+    return IPv4Address.fromBits(bits);
   }
 
   public get isAPIPA(): boolean {
@@ -90,9 +78,9 @@ export class IPv4Address {
   }
 
   public get className(): string {
-    for (const key in RFC791_CLASS_RANGES) {
-      const className = key as keyof typeof RFC791_CLASS_RANGES;
-      const range = RFC791_CLASS_RANGES[className];
+    for (const key in IP_CLASS_RANGES) {
+      const className = key as keyof typeof IP_CLASS_RANGES;
+      const range = IP_CLASS_RANGES[className];
 
       if (this.inRange(range)) {
         return key;
@@ -103,9 +91,9 @@ export class IPv4Address {
   }
 
   public get defaultMask(): IPv4Mask | undefined {
-    const className = this.className as keyof typeof RFC791_CLASS_DEFAULT_MASKS;
+    const className = this.className as keyof typeof IP_CLASS_DEFAULT_MASKS;
 
-    const maskArray = RFC791_CLASS_DEFAULT_MASKS[className];
+    const maskArray = IP_CLASS_DEFAULT_MASKS[className];
 
     return !maskArray
       ? undefined
